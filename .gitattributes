@@ -1,0 +1,7 @@
+* text=auto
+
+*.java		text
+*.scala		text
+*.txt		text
+*.xml		text
+*.properties	text
