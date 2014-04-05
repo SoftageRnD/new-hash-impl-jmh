@@ -23,9 +23,9 @@ public class IntegersState {
     @Param({"100000", "200000", "300000", "400000", "500000", "600000", "700000", "800000", "900000", "1000000"})
     public int size;
 
-    public scala.collection.mutable.HashSet<Integer> scalaSet = new HashSet<Integer>();
-    public ImmutableTrieBucketHashSet<Integer> immutableTrieBucketSet = new ImmutableTrieBucketHashSet<Integer>();
-    public ListBucketHashSet<Integer> listBucketSet = new ListBucketHashSet<Integer>();
+    public scala.collection.mutable.HashSet<Integer> scalaSet = new HashSet<>();
+    public ImmutableTrieBucketHashSet<Integer> immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
+    public ListBucketHashSet<Integer> listBucketSet = new ListBucketHashSet<>();
 
     public Integer[] keys = new Integer[KEYS_SIZE];
     public Integer[] notExistedKeys = new Integer[KEYS_SIZE];
@@ -35,8 +35,8 @@ public class IntegersState {
         Random random = new Random(42L);
 
         ArrayList<Integer> data = generateDistinctRandomNums(random, size + KEYS_SIZE);
-        ArrayList<Integer> existedData = new ArrayList<Integer>(size);
-        ArrayList<Integer> notExistedData = new ArrayList<Integer>(KEYS_SIZE);
+        ArrayList<Integer> existedData = new ArrayList<>(size);
+        ArrayList<Integer> notExistedData = new ArrayList<>(KEYS_SIZE);
         for (int i = 0; i < data.size(); ++i) {
             Integer key = data.get(i);
             if (i < size) {
@@ -60,11 +60,11 @@ public class IntegersState {
     }
 
     private ArrayList<Integer> generateDistinctRandomNums(Random random, int size) {
-        java.util.HashSet<Integer> set = new java.util.HashSet<Integer>(size);
+        java.util.HashSet<Integer> set = new java.util.HashSet<>(size);
         while (set.size() != size) {
             set.add(random.nextInt());
         }
-        ArrayList<Integer> result = new ArrayList<Integer>(set);
+        ArrayList<Integer> result = new ArrayList<>(set);
         Collections.shuffle(result, random);
         return result;
     }
