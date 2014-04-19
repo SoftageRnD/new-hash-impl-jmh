@@ -37,32 +37,48 @@ public class StringsState {
     @Param({"10000", "15000", "20000", "25000", "30000", "35000", "40000", "45000", "50000", "55000"})
     public int size;
 
+    private Random random = new Random();
+    private ArrayList<String> existingKeys = new ArrayList<>(size);
+    private ArrayList<String> notExistingKeys = new ArrayList<>(KEYS_SIZE);
+    private int existingKeyIndex;
+    private int notExistingKeyIndex;
+
     public scala.collection.mutable.HashSet<String> scalaSet = new HashSet<>();
     public ImmutableTrieBucketHashSet<String> immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
     public ListBucketHashSet<String> listBucketSet = new ListBucketHashSet<>();
 
-    public String[] keys = new String[KEYS_SIZE];
-    public String[] notExistedKeys = new String[KEYS_SIZE];
+    public String existingKey;
+    public String notExistingKey;
 
     @Setup(Level.Trial)
     public void generateData() {
-        Random random = new Random(42L);
+        random.setSeed(42L);
+        existingKeys.clear();
+        notExistingKeys.clear();
+        existingKeyIndex = 0;
+        notExistingKeyIndex = 0;
 
-        ArrayList<String> existedData = new ArrayList<>(size);
         for (int i = 0; i < size; ++i) {
             String key = IDENTIFIERS.get(i);
-            existedData.add(key);
+            existingKeys.add(key);
             scalaSet.add(key);
             immutableTrieBucketSet.add(key);
             listBucketSet.add(key);
         }
-        Collections.shuffle(existedData, random);
         for (int i = 0; i < KEYS_SIZE; ++i) {
-            keys[i] = existedData.get(i);
+            notExistingKeys.add(IDENTIFIERS.get(size + i));
         }
 
-        for (int i = 0; i < KEYS_SIZE; ++i) {
-            notExistedKeys[i] = IDENTIFIERS.get(size + i);
-        }
+        Collections.shuffle(existingKeys, random);
+        Collections.shuffle(notExistingKeys, random);
+    }
+
+    @Setup(Level.Iteration)
+    public void pickKeys() {
+        existingKey = existingKeys.get(existingKeyIndex);
+        notExistingKey = notExistingKeys.get(notExistingKeyIndex);
+
+        existingKeyIndex = (existingKeyIndex + 1) % existingKeys.size();
+        notExistingKeyIndex = (notExistingKeyIndex + 1) % notExistingKeys.size();
     }
 }

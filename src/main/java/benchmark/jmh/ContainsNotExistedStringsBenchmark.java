@@ -5,32 +5,25 @@ import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.GenerateMicroBenchmark;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.logic.BlackHole;
 
 /**
  * @author Misha Sokolov
  */
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@OutputTimeUnit(TimeUnit.NANOSECONDS)
 public class ContainsNotExistedStringsBenchmark {
     @GenerateMicroBenchmark
-    public void scalaSet(BlackHole bl, StringsState state) {
-        for (String key : state.notExistedKeys) {
-            bl.consume(state.scalaSet.contains(key));
-        }
+    public boolean scalaSet(StringsState state) {
+        return state.scalaSet.contains(state.notExistingKey);
     }
 
     @GenerateMicroBenchmark
-    public void immutableTrieBucketSet(BlackHole bl, StringsState state) {
-        for (String key : state.notExistedKeys) {
-            bl.consume(state.immutableTrieBucketSet.contains(key));
-        }
+    public boolean immutableTrieBucketSet(StringsState state) {
+        return state.immutableTrieBucketSet.contains(state.notExistingKey);
     }
 
     @GenerateMicroBenchmark
-    public void listBucketSet(BlackHole bl, StringsState state) {
-        for (String key : state.notExistedKeys) {
-            bl.consume(state.listBucketSet.contains(key));
-        }
+    public boolean listBucketSet(StringsState state) {
+        return state.listBucketSet.contains(state.notExistingKey);
     }
 }
