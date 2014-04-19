@@ -63,7 +63,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <scala.version>2.10.2</scala.version>
+    <scala.version>2.11.0</scala.version>
   </properties>
   <dependencies>
     <dependency>
