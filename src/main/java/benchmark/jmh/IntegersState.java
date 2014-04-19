@@ -18,45 +18,56 @@ import org.openjdk.jmh.annotations.State;
  */
 @State(Scope.Thread)
 public class IntegersState {
-    public static final int KEYS_SIZE = 1000;
+    private static final int KEYS_SIZE = 1000;
 
-    @Param({"100000", "200000", "300000", "400000", "500000", "600000", "700000", "800000", "900000", "1000000"})
+    @Param({"10000", "15000", "20000", "25000", "30000", "35000", "40000", "45000", "50000", "55000"})
     public int size;
+
+    private Random random = new Random();
+    private ArrayList<Integer> existingKeys = new ArrayList<>(size);
+    private ArrayList<Integer> notExistingKeys = new ArrayList<>(KEYS_SIZE);
+    private int existingKeyIndex;
+    private int notExistingKeyIndex;
 
     public scala.collection.mutable.HashSet<Integer> scalaSet = new HashSet<>();
     public ImmutableTrieBucketHashSet<Integer> immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
     public ListBucketHashSet<Integer> listBucketSet = new ListBucketHashSet<>();
 
-    public Integer[] keys = new Integer[KEYS_SIZE];
-    public Integer[] notExistedKeys = new Integer[KEYS_SIZE];
+    public Integer existingKey;
+    public Integer notExistingKey;
 
     @Setup(Level.Trial)
     public void generateData() {
-        Random random = new Random(42L);
+        random.setSeed(42L);
+        existingKeys.clear();
+        notExistingKeys.clear();
+        existingKeyIndex = 0;
+        notExistingKeyIndex = 0;
 
         ArrayList<Integer> data = generateDistinctRandomNums(random, size + KEYS_SIZE);
-        ArrayList<Integer> existedData = new ArrayList<>(size);
-        ArrayList<Integer> notExistedData = new ArrayList<>(KEYS_SIZE);
         for (int i = 0; i < data.size(); ++i) {
             Integer key = data.get(i);
             if (i < size) {
-                existedData.add(key);
+                existingKeys.add(key);
                 scalaSet.add(key);
                 immutableTrieBucketSet.add(key);
                 listBucketSet.add(key);
             } else {
-                notExistedData.add(key);
+                notExistingKeys.add(key);
             }
         }
 
-        Collections.shuffle(existedData, random);
-        for (int i = 0; i < KEYS_SIZE; ++i) {
-            keys[i] = existedData.get(i);
-        }
+        Collections.shuffle(existingKeys, random);
+        Collections.shuffle(notExistingKeys, random);
+    }
 
-        for (int i = 0; i < KEYS_SIZE; ++i) {
-            notExistedKeys[i] = notExistedData.get(i);
-        }
+    @Setup(Level.Iteration)
+    public void pickKeys() {
+        existingKey = existingKeys.get(existingKeyIndex);
+        notExistingKey = notExistingKeys.get(notExistingKeyIndex);
+
+        existingKeyIndex = (existingKeyIndex + 1) % existingKeys.size();
+        notExistingKeyIndex = (notExistingKeyIndex + 1) % notExistingKeys.size();
     }
 
     private ArrayList<Integer> generateDistinctRandomNums(Random random, int size) {

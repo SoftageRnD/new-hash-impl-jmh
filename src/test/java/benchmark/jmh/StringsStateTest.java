@@ -2,64 +2,103 @@ package benchmark.jmh;
 
 import scala.collection.mutable.Set;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashSet;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import static benchmark.jmh.BenchmarkTestUtils.getStateParamValues;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.*;
 
 /**
  * @author Misha Sokolov
  */
+@RunWith(Parameterized.class)
 public class StringsStateTest {
-    private static final int SIZE = 55000;
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<Object[]> extractStateParameters() throws NoSuchFieldException {
+        ArrayList<Object[]> params = new ArrayList<>();
+        for (String stateSizeString : getStateParamValues(StringsState.class, "size")) {
+            params.add(new Object[]{Integer.valueOf(stateSizeString)});
+        }
+        return params;
+    }
+
+    @Parameterized.Parameter
+    public Integer size;
 
     private StringsState state;
 
     @Before
     public void setUp() {
         state = new StringsState();
-        state.size = SIZE;
+        state.size = size;
     }
 
     @Test
-    public void generateData() {
+    public void runBenchmarkOnce() {
         state.generateData();
+        assertAllSetsGenerated();
+        iterateBenchmark10000Times();
+    }
 
-        assertKeysGenerated(state.keys);
-        assertKeysGenerated(state.notExistedKeys);
+    @Test
+    public void runBenchmarkTwice() {
+        state.generateData();
+        assertAllSetsGenerated();
+        iterateBenchmark10000Times();
+
+        state.generateData();
+        assertAllSetsGenerated();
+        iterateBenchmark10000Times();
+    }
+
+    private void iterateBenchmark10000Times() {
+        HashSet<String> existingKeys = new HashSet<>();
+        HashSet<String> notExistingKeys = new HashSet<>();
+        for (int i = 0; i < 10000; ++i) {
+            state.pickKeys();
+
+            assertThat(state.existingKey, is(notNullValue()));
+            assertExistsInAllSets(state.existingKey);
+            existingKeys.add(state.existingKey);
+
+            assertThat(state.notExistingKey, is(notNullValue()));
+            assertNotExistsInAllSets(state.notExistingKey);
+            notExistingKeys.add(state.notExistingKey);
+        }
+
+        assertThat(existingKeys, hasSize(greaterThanOrEqualTo(1000)));
+        assertThat(notExistingKeys, hasSize(greaterThanOrEqualTo(1000)));
+    }
+
+    private void assertAllSetsGenerated() {
         assertSetGenerated(state.scalaSet);
         assertSetGenerated(state.immutableTrieBucketSet);
         assertSetGenerated(state.listBucketSet);
     }
 
-    private void assertKeysGenerated(String[] keys) {
-        assertNotNull(keys);
-        assertEquals(StringsState.KEYS_SIZE, keys.length);
-        for (String key : keys) {
-            assertNotNull(key);
-        }
-        java.util.HashSet<String> uniqueKeys = new HashSet<>(Arrays.asList(keys));
-        assertEquals(keys.length, uniqueKeys.size());
+    private void assertExistsInAllSets(String key) {
+        assertTrue(state.immutableTrieBucketSet.contains(key));
+        assertTrue(state.listBucketSet.contains(key));
+        assertTrue(state.scalaSet.contains(key));
+    }
+
+    private void assertNotExistsInAllSets(String key) {
+        assertFalse(state.immutableTrieBucketSet.contains(key));
+        assertFalse(state.listBucketSet.contains(key));
+        assertFalse(state.scalaSet.contains(key));
     }
 
     private void assertSetGenerated(Set<String> set) {
-        assertNotNull(set);
-        assertEquals(SIZE, set.size());
-        assertAllExists(state.keys, set);
-        assertAllNotExists(state.notExistedKeys, set);
-    }
-
-    private void assertAllExists(String[] keys, Set<String> set) {
-        for (String key : keys) {
-            assertTrue(set.contains(key));
-        }
-    }
-
-    private void assertAllNotExists(String[] keys, Set<String> set) {
-        for (String key : keys) {
-            assertFalse(set.contains(key));
-        }
+        assertThat(set, is(Matchers.notNullValue()));
+        assertEquals((int) size, set.size());
     }
 }

@@ -2,64 +2,103 @@ package benchmark.jmh;
 
 import scala.collection.mutable.Set;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashSet;
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import static benchmark.jmh.BenchmarkTestUtils.getStateParamValues;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.*;
 
 /**
  * @author Misha Sokolov
  */
+@RunWith(Parameterized.class)
 public class IntegersStateTest {
-    private static final int SIZE = 500000;
+    @Parameterized.Parameters(name = "{0}")
+    public static Iterable<Object[]> extractStateParameters() throws NoSuchFieldException {
+        ArrayList<Object[]> params = new ArrayList<>();
+        for (String stateSizeString : getStateParamValues(IntegersState.class, "size")) {
+            params.add(new Object[]{Integer.valueOf(stateSizeString)});
+        }
+        return params;
+    }
+
+    @Parameterized.Parameter
+    public Integer size;
 
     private IntegersState state;
 
     @Before
     public void setUp() {
         state = new IntegersState();
-        state.size = SIZE;
+        state.size = size;
     }
 
     @Test
-    public void generateData() {
+    public void runBenchmarkOnce() {
         state.generateData();
+        assertAllSetsGenerated();
+        iterateBenchmark10000Times();
+    }
 
-        assertKeysGenerated(state.keys);
-        assertKeysGenerated(state.notExistedKeys);
+    @Test
+    public void runBenchmarkTwice() {
+        state.generateData();
+        assertAllSetsGenerated();
+        iterateBenchmark10000Times();
+
+        state.generateData();
+        assertAllSetsGenerated();
+        iterateBenchmark10000Times();
+    }
+
+    private void iterateBenchmark10000Times() {
+        HashSet<Integer> existingKeys = new HashSet<>();
+        HashSet<Integer> notExistingKeys = new HashSet<>();
+        for (int i = 0; i < 10000; ++i) {
+            state.pickKeys();
+
+            assertThat(state.existingKey, is(notNullValue()));
+            assertExistsInAllSets(state.existingKey);
+            existingKeys.add(state.existingKey);
+
+            assertThat(state.notExistingKey, is(notNullValue()));
+            assertNotExistsInAllSets(state.notExistingKey);
+            notExistingKeys.add(state.notExistingKey);
+        }
+
+        assertThat(existingKeys, hasSize(greaterThanOrEqualTo(1000)));
+        assertThat(notExistingKeys, hasSize(greaterThanOrEqualTo(1000)));
+    }
+
+    private void assertAllSetsGenerated() {
         assertSetGenerated(state.scalaSet);
         assertSetGenerated(state.immutableTrieBucketSet);
         assertSetGenerated(state.listBucketSet);
     }
 
-    private void assertKeysGenerated(Integer[] keys) {
-        assertNotNull(keys);
-        assertEquals(IntegersState.KEYS_SIZE, keys.length);
-        for (Integer key : keys) {
-            assertNotNull(key);
-        }
-        java.util.HashSet<Integer> uniqueKeys = new HashSet<>(Arrays.asList(keys));
-        assertEquals(keys.length, uniqueKeys.size());
+    private void assertExistsInAllSets(Integer key) {
+        assertTrue(state.immutableTrieBucketSet.contains(key));
+        assertTrue(state.listBucketSet.contains(key));
+        assertTrue(state.scalaSet.contains(key));
+    }
+
+    private void assertNotExistsInAllSets(Integer key) {
+        assertFalse(state.immutableTrieBucketSet.contains(key));
+        assertFalse(state.listBucketSet.contains(key));
+        assertFalse(state.scalaSet.contains(key));
     }
 
     private void assertSetGenerated(Set<Integer> set) {
-        assertNotNull(set);
-        assertEquals(SIZE, set.size());
-        assertAllExists(state.keys, set);
-        assertAllNotExists(state.notExistedKeys, set);
-    }
-
-    private void assertAllExists(Integer[] keys, Set<Integer> set) {
-        for (Integer key : keys) {
-            assertTrue(set.contains(key));
-        }
-    }
-
-    private void assertAllNotExists(Integer[] keys, Set<Integer> set) {
-        for (Integer key : keys) {
-            assertFalse(set.contains(key));
-        }
+        assertThat(set, is(Matchers.notNullValue()));
+        assertEquals((int) size, set.size());
     }
 }
