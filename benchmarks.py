@@ -72,7 +72,7 @@ def run_all():
     warmup_iterations = 20
     run_results_folder = make_run_results_folder()
 
-    with open(os.path.join(run_results_folder, info_file_name), mode='x') as info_file:
+    with open(os.path.join(run_results_folder, info_file_name), mode='wt') as info_file:
         info_file.write('--------------Run Info--------------\n')
         info_file.write('Forks: %d\n' % forks)
         info_file.write('Measurement iterations: %d\n' % measurement_iterations)
