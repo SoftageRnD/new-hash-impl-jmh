@@ -1,5 +1,6 @@
 .idea/
 *.iml
 target/
+benchmark-results/
 *.csv
 *.pdf
