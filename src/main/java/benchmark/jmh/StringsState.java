@@ -34,7 +34,7 @@ public class StringsState {
     }
 
     // total size of available identifiers set = 58422 (/identifiers.txt)
-    @Param({"10000", "15000", "20000", "25000", "30000", "35000", "40000", "45000", "50000", "55000"})
+    @Param({"1000", "3947", "6895", "9842", "12789", "15737", "18684", "21632", "24579", "27526", "30474", "33421", "36368", "39316", "42263", "45211", "48158", "51105", "54053", "57000"})
     public int size;
 
     private Random random = new Random();
