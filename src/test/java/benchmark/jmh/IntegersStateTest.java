@@ -1,5 +1,7 @@
 package benchmark.jmh;
 
+import ru.softage.collection.mutable.ImmutableTrieBucketHashSet;
+import ru.softage.collection.mutable.ListBucketHashSet;
 import scala.collection.mutable.Set;
 
 import java.util.ArrayList;
@@ -58,6 +60,21 @@ public class IntegersStateTest {
         state.generateData();
         assertAllSetsGenerated();
         iterateBenchmark10000Times();
+    }
+
+    @Test
+    public void setsShouldBeReinstantiatedWhenDataGenerated() {
+        state.generateData();
+
+        scala.collection.mutable.HashSet<Integer> scalaSet = state.scalaSet;
+        ImmutableTrieBucketHashSet<Integer> immutableTrieBucketSet = state.immutableTrieBucketSet;
+        ListBucketHashSet<Integer> listBucketSet = state.listBucketSet;
+
+        state.generateData();
+
+        assertTrue(scalaSet != state.scalaSet);
+        assertTrue(immutableTrieBucketSet != state.immutableTrieBucketSet);
+        assertTrue(listBucketSet != state.listBucketSet);
     }
 
     private void iterateBenchmark10000Times() {

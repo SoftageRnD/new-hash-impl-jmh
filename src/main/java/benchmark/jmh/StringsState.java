@@ -38,14 +38,14 @@ public class StringsState {
     public int size;
 
     private Random random = new Random();
-    private ArrayList<String> existingKeys = new ArrayList<>(size);
+    private ArrayList<String> existingKeys;
     private ArrayList<String> notExistingKeys = new ArrayList<>(KEYS_SIZE);
     private int existingKeyIndex;
     private int notExistingKeyIndex;
 
-    public scala.collection.mutable.HashSet<String> scalaSet = new HashSet<>();
-    public ImmutableTrieBucketHashSet<String> immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
-    public ListBucketHashSet<String> listBucketSet = new ListBucketHashSet<>();
+    public scala.collection.mutable.HashSet<String> scalaSet;
+    public ImmutableTrieBucketHashSet<String> immutableTrieBucketSet;
+    public ListBucketHashSet<String> listBucketSet;
 
     public String existingKey;
     public String notExistingKey;
@@ -53,7 +53,10 @@ public class StringsState {
     @Setup(Level.Trial)
     public void generateData() {
         random.setSeed(42L);
-        existingKeys.clear();
+        scalaSet = new HashSet<>();
+        immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
+        listBucketSet = new ListBucketHashSet<>();
+        existingKeys = new ArrayList<>(size);
         notExistingKeys.clear();
         existingKeyIndex = 0;
         notExistingKeyIndex = 0;

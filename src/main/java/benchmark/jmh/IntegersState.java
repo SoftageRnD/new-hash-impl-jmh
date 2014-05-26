@@ -24,14 +24,14 @@ public class IntegersState {
     public int size;
 
     private Random random = new Random();
-    private ArrayList<Integer> existingKeys = new ArrayList<>(size);
+    private ArrayList<Integer> existingKeys;
     private ArrayList<Integer> notExistingKeys = new ArrayList<>(KEYS_SIZE);
     private int existingKeyIndex;
     private int notExistingKeyIndex;
 
-    public scala.collection.mutable.HashSet<Integer> scalaSet = new HashSet<>();
-    public ImmutableTrieBucketHashSet<Integer> immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
-    public ListBucketHashSet<Integer> listBucketSet = new ListBucketHashSet<>();
+    public scala.collection.mutable.HashSet<Integer> scalaSet;
+    public ImmutableTrieBucketHashSet<Integer> immutableTrieBucketSet;
+    public ListBucketHashSet<Integer> listBucketSet;
 
     public Integer existingKey;
     public Integer notExistingKey;
@@ -39,7 +39,10 @@ public class IntegersState {
     @Setup(Level.Trial)
     public void generateData() {
         random.setSeed(42L);
-        existingKeys.clear();
+        scalaSet = new HashSet<>();
+        immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
+        listBucketSet = new ListBucketHashSet<>();
+        existingKeys = new ArrayList<>(size);
         notExistingKeys.clear();
         existingKeyIndex = 0;
         notExistingKeyIndex = 0;
