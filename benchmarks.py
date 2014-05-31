@@ -11,6 +11,8 @@ import platform
 benchmarks_results_folder = 'benchmark-results'
 result_file_name = 'benchmarks.csv'
 info_file_name = 'info.txt'
+perf_diff_file_name = 'performance-difference.txt'
+baseline_set_impl_name = 'scalaSet'
 
 
 def get_jvm_version():
@@ -33,13 +35,15 @@ def run_benchmarks(forks, measurement_iterations, warmup_iterations, result_file
           '-rff', result_file_path])
 
 
-def make_charts(result_file_path, output_folder):
-    def get_benchmark_group(benchmark):
+def get_benchmark_group(benchmark):
         return re.sub(r'\.[^\.]+$', '', benchmark)
 
-    def get_set_name(benchmark):
-        return re.search(r'([^\.]+)$', benchmark).group(1)
 
+def get_set_name(benchmark):
+    return re.search(r'([^\.]+)$', benchmark).group(1)
+
+
+def make_charts(result_file_path, output_folder):
     data = pd.read_csv(result_file_path)
     benchmark_groups = data['Benchmark'].map(get_benchmark_group).unique()
     for benchmark_group in benchmark_groups:
@@ -66,6 +70,52 @@ def make_run_results_folder():
     return run_results_folder
 
 
+def extract_benchmarks_data_frames(result_file_path):
+    data = pd.read_csv(result_file_path)
+    benchmark_groups = data['Benchmark'].map(get_benchmark_group).unique()
+    benchmarks_data_frames = {}
+    for benchmark_group in benchmark_groups:
+        benchmark_data = data[data['Benchmark'].str.startswith(benchmark_group)]
+        benchmark_data['Set'] = benchmark_data['Benchmark'].apply(get_set_name)
+
+        benchmarks_data_frames[benchmark_group] = benchmark_data.pivot(index='Param: size', columns='Set')
+
+    return benchmarks_data_frames
+
+
+def calc_performance_difference_percentage(result_file_path):
+    benchmarks_differences = {}
+    for benchmark, data in extract_benchmarks_data_frames(result_file_path).items():
+        mean_data = data['Mean']
+        print(benchmark)
+        print(mean_data)
+        sets = mean_data.columns
+        sets = sets[sets != baseline_set_impl_name]
+        sets_differences = {}
+        for set_name in sets:
+            set_data = mean_data[set_name]
+            baseline_data = mean_data[baseline_set_impl_name]
+            difference = (1 - set_data / baseline_data) * 100
+            sets_differences[set_name] = (difference.mean(), difference.min(), difference.max())
+        benchmarks_differences[benchmark] = sets_differences
+
+    return benchmarks_differences
+
+
+def make_performance_difference_file(result_file_path, run_results_folder):
+    benchmarks_differences = calc_performance_difference_percentage(result_file_path)
+    with open(os.path.join(run_results_folder, perf_diff_file_name), mode='wt') as perf_diff_file:
+        perf_diff_file.write('Baseline implementation: %s\n\n' % baseline_set_impl_name)
+        for benchmark in benchmarks_differences:
+            sets_differences = benchmarks_differences[benchmark]
+            perf_diff_file.write('%s:\n' % benchmark)
+            for set_name in sets_differences:
+                mean, min_diff, max_diff = sets_differences[set_name]
+                perf_diff_file.write('\t%s:\taverage %.2f%%, min %.2f%%, max %.2f%%\n' %
+                                     (set_name, mean, min_diff, max_diff))
+            perf_diff_file.write('\n')
+
+
 def run_all():
     forks = 1
     measurement_iterations = 100
@@ -90,6 +140,7 @@ def run_all():
         measurement_iterations=measurement_iterations,
         warmup_iterations=warmup_iterations)
     make_charts(result_file_path, run_results_folder)
+    make_performance_difference_file(result_file_path, run_results_folder)
 
 
 if __name__ == '__main__':
