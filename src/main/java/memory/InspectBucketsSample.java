@@ -10,7 +10,7 @@ import static memory.BucketsInspector.inspectBuckets;
 /**
  * Sample app which prints ImmutableTrieBucketHashSet structure with different data sets
  */
-public class InspectBuckets {
+public class InspectBucketsSample {
     public static void main(String[] args) throws NoSuchFieldException, IllegalAccessException {
         System.out.println("----Integers----");
         IntegersState integersState = new IntegersState();
