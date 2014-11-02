@@ -23,7 +23,9 @@ def get_cpu_info():
     return getoutput('lscpu')
 
 
-def run_benchmarks(forks, measurement_iterations, warmup_iterations, result_file_path, benchmarks=[]):
+def run_benchmarks(forks, measurement_iterations, warmup_iterations, result_file_path, benchmarks=None):
+    if not benchmarks:
+        benchmarks = []
     benchmarks_java_regexp = '.*'
     if len(benchmarks) > 0:
         benchmarks_java_regexp = "|".join(['.*' + benchmark + '.*' for benchmark in benchmarks])
@@ -35,12 +37,30 @@ def run_benchmarks(forks, measurement_iterations, warmup_iterations, result_file
           '-rff', result_file_path])
 
 
+def run_buckets_inspection(result_dir):
+    call(['java', '-classpath', 'target/microbenchmarks.jar',  'memory.InspectAverageBucketSizePerElement', result_dir])
+
+
 def get_benchmark_group(benchmark):
-        return re.sub(r'\.[^\.]+$', '', benchmark)
+    return re.sub(r'\.[^\.]+$', '', benchmark)
 
 
 def get_set_name(benchmark):
     return re.search(r'([^\.]+)$', benchmark).group(1)
+
+
+def plot_bucket_inspection(bucket_inspection_file_path):
+    data = pd.read_csv(bucket_inspection_file_path)
+    data.plot(x='size', y='averageBucketSizePerElement')
+
+
+def get_bucket_inspection_file_name(benchmark_group):
+    if benchmark_group.endswith('StringsBenchmark'):
+        return 'hash-set-with-strings-buckets-size.csv'
+    elif benchmark_group.endswith('IntegersBenchmark'):
+        return 'hash-set-with-integers-buckets-size.csv'
+    else:
+        raise RuntimeError('unable to resolve bucket inspection file name for benchmark_group ' + benchmark_group)
 
 
 def make_charts(result_file_path, output_folder):
@@ -53,11 +73,23 @@ def make_charts(result_file_path, output_folder):
         unit = chart_data['Unit'].unique()[0]
 
         figure = plt.figure()
+
+        plt.subplot(211)
         for set in sets:
             chart_data[chart_data['Set'] == set].plot(x='Param: size', y='Mean')
-        plt.legend(sets, loc='upper left')
+        main_data_legend = plt.legend(sets, loc='center left', bbox_to_anchor=(1, 0.5))
         plt.ylabel(unit)
-        figure.savefig(os.path.join(output_folder, benchmark_group + '.png'))
+
+        plt.subplot(212)
+        plot_bucket_inspection(os.path.join(output_folder, get_bucket_inspection_file_name(benchmark_group)))
+        bucket_inspection_legend = plt.legend(['average bucket size per element'],
+                                              loc='center left',
+                                              bbox_to_anchor=(1, 0.5))
+
+        additional_artists = [main_data_legend, bucket_inspection_legend]
+        figure.savefig(os.path.join(output_folder, benchmark_group + '.png'),
+                       additional_artists=additional_artists,
+                       bbox_inches='tight')
 
 
 def make_run_results_folder():
@@ -139,6 +171,7 @@ def run_all():
         forks=forks,
         measurement_iterations=measurement_iterations,
         warmup_iterations=warmup_iterations)
+    run_buckets_inspection(run_results_folder)
     make_charts(result_file_path, run_results_folder)
     make_performance_difference_file(result_file_path, run_results_folder)
 
