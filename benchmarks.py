@@ -150,7 +150,7 @@ def make_performance_difference_file(result_file_path, run_results_folder):
 
 def run_all():
     forks = 1
-    measurement_iterations = 100
+    measurement_iterations = 350
     warmup_iterations = 20
     run_results_folder = make_run_results_folder()
 
