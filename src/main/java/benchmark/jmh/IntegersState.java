@@ -38,7 +38,7 @@ public class IntegersState {
 
     @Setup(Level.Trial)
     public void generateData() {
-        random.setSeed(42L);
+        random.setSeed(-23252250L);
         scalaSet = new HashSet<>();
         immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
         listBucketSet = new ListBucketHashSet<>();

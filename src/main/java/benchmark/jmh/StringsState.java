@@ -52,7 +52,7 @@ public class StringsState {
 
     @Setup(Level.Trial)
     public void generateData() {
-        random.setSeed(42L);
+        random.setSeed(94353145L);
         scalaSet = new HashSet<>();
         immutableTrieBucketSet = new ImmutableTrieBucketHashSet<>();
         listBucketSet = new ListBucketHashSet<>();
